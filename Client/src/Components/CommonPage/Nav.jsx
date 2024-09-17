@@ -38,29 +38,28 @@ const Navbar = () => {
 
   // const imageUrl = `http://localhost:8070/uploads/${user.profilePhoto}`;
   return (
-    <nav className="bg-gray-900 text-white p-4 flex justify-between items-center">
+    <nav className="bg-gray-900 text-white  flex justify-between items-center">
       {/* Left section (Logo) */}
       <div className="flex items-center">
         <div className="text-xl font-bold tracking-wider">
-          JOB
-          <br />
-          PORTAL
+          JOB PORTAL
         </div>
       </div>
 
       {/* Right section (Links) */}
       <div className="flex items-center space-x-8">
         <Link to="/job">back</Link>
-        <Link to={`/profile/${user._id}`}>
-          <img
-            className="rounded-full w-10 h-10 object-cover"
-            src={`http://localhost:8070/uploads/${user.profilePhoto}`}
-            alt="Profile"
-          />
-        </Link>
+        <button onClick={() => navigate(`/profile/${user._id}`)}>
+        <img
+  className="rounded-full w-10 h-10 object-cover"
+  src={`http://localhost:8070/uploads/${user.profilePhoto}`} 
+  alt="Profile"
+/>
+
+        </button>
         <button
           onClick={handleLogout}
-          className="hover:text-red-500 text-xl bg-black p-3 m-3 rounded-full transition-colors duration-200"
+          className="hover:text-red-500 text-xl bg-black p-2 m-3 rounded-full transition-colors duration-200"
         >
           Logout
         </button>

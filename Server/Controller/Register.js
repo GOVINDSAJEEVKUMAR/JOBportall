@@ -44,7 +44,7 @@ const SignUp = async (req, res) => {
                 drinkingOrSmoking,
                 height,
                 weight,
-                profilePhoto: req.file ? req.file.filename : null
+                profilePhoto: req.file.filename
             });
         } else if (role === 'Employer') {
             newUser = new Employer({
@@ -64,7 +64,7 @@ const SignUp = async (req, res) => {
                 drinkingOrSmoking,
                 height,
                 weight,
-                profilePhoto: req.file ? req.file.filename : null
+                profilePhoto: req.file.filename
             });
         } else if(role === 'Employee'){ 
             newUser = new Employee({
@@ -84,7 +84,7 @@ const SignUp = async (req, res) => {
                 drinkingOrSmoking,
                 height,
                 weight,
-                profilePhoto: req.file ? req.file.filename : null
+                profilePhoto: req.file.filename
             });
 
         }else{

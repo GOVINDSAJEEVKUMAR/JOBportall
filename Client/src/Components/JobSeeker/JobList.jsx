@@ -30,6 +30,8 @@ const DataFetchingComponent = () => {
       const response = await axios.get('http://localhost:8070/job/get');
       setData(response.data);
       setFilteredData(response.data);
+      console.log(response.data);
+      
     } catch (err) {
       setError('Error fetching data');
     } finally {

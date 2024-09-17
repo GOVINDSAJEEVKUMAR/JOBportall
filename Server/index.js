@@ -8,12 +8,11 @@ const app = express()
 const path = require("path")
 
 
-app.use(cors(
-    {
-        origin: "http://localhost:5173",
-        credentials: true
-    }
-))
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }));
+
 app.use(express.json())
 app.use(errorHandler)
 
@@ -22,11 +21,15 @@ app.use("/job", require ("./Routes/JobRoute"))
 app.use("/apply", require ("./Routes/ApplyRoute"))
 
 app.use(notFound)
-app.use(express.static(path.join(__dirname, 'uploads')))
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+console.log(path.join(__dirname, 'uploads'));
+
+
+
 
 const port = process.env.PORT || 8070
 const startApp = async () => {

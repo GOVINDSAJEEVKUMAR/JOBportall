@@ -1,37 +1,42 @@
+
 const mongoose = require('mongoose');
 
 const applicationSchema = new mongoose.Schema({
   job: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Job',
-    required: true,
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Job',
+      required: true
+    },
+    title: String,
+    company: String,
+    location: String,
+    salary: String,
   },
   jobseeker: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Jobseeker',
-    required: true,
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    name: String,
+    email: String,
+    phone: String,
   },
   resume: {
     type: String,
-    required: true,
+    required: true
   },
-  status: {
-    type: String,
-    enum: ['Pending', 'Accepted', 'Rejected'],
-    default: 'Pending',
-  },
-  postedBy: {  // New field for employer
+  postedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employer',
-    required: true,
+    ref: 'User', // Refers to the employer who posted the job
+    required: true
   },
   status: {
     type: String,
-    enum: ['Pending', 'Accepted', 'Rejected'],
     default: 'Pending',
-  },
+    enum: ['Pending', 'Accepted', 'Rejected']
+  }
 }, { timestamps: true });
 
-const Application = mongoose.model('Application', applicationSchema);
-
-module.exports = Application;
+module.exports = mongoose.model('Application', applicationSchema);

@@ -18,14 +18,15 @@ const jobSchema = new mongoose.Schema({
     required: true,
   },
   salary: {
-    type: Number,
+    type: String,
     required: true,
   },
-  postedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employer',
-    index: true,
+  type:{
+    type:String,
+    required:true
+
   },
+  postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employer' },
 }, { timestamps: true });
 
 const Job = mongoose.model('Job', jobSchema);

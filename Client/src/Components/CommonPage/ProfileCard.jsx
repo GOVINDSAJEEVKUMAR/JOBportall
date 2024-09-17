@@ -43,7 +43,10 @@ const UserDetailsPage = () => {
 
   if (!userData) return <div>No user data found</div>;
 
-  const imageUrl = `http://localhost:8070/uploads/${userData.profilePhoto}`; // Concatenate image URL properly
+  const imageUrl = `http://localhost:8070/uploads/${userData.profilePhoto}`;
+  console.log();
+  
+
 
   return (
     <div>
@@ -52,11 +55,11 @@ const UserDetailsPage = () => {
         <div className="bg-white shadow-md rounded-lg p-6">
           <h1 className="text-3xl font-bold mb-4">{userData.name}</h1>
           <div className="flex items-center space-x-4">
-            <img
-              src={imageUrl} // Use properly concatenated imageUrl
-              alt="Profile"
-              className="w-24 h-24 object-cover rounded-full border-2 border-gray-300"
-            />
+          <img 
+  src={userData.profilePhoto ? imageUrl : '/default-placeholder.png'}
+  alt="Profile"
+  className="w-24 h-24 object-cover rounded-full border-2 border-gray-300"
+/>
             <div>
               <p><strong>Email:</strong> {userData.email}</p>
               <p><strong>Phone:</strong> {userData.phone}</p>

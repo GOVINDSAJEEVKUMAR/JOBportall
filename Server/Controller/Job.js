@@ -6,35 +6,37 @@ const Job = require ("../Model/JobSchema")
 
 
 const newJob = async (req, res) => {
-    try {
-      const { title, description, type,category,location, email,salary } = req.body;
-      console.log(req.body);
-      
-      // Validate input
-      if (!title || !description || !type || !category || !location||salary ) {
-        return res.status(400).send({ message: 'All fields are required' });
-      }
-  
-      // Find employee by email
-      const employer = await Employer.findOne({ email });
-      // console.log(employee);
-      
-      if (!employer) {
-        return res.status(404).send({ message: 'Employee not found' });
-      }
-  
-      // Create a new job with the found employee's ID
-      const job = new Job({ title, description,location,salary, category,type, postedBy: employer._id });
-      await job.save();
-  
-      res.status(201).send(job);
-    } catch (error) {
-      console.error('Error creating job:', error);
-      res.status(500).send({ message: 'Server error', error });
+  try {
+    const { title, description, type, category, location, email, salary } = req.body;
+    console.log(req.body);
+    
+    // Validate input: ensure that all necessary fields are provided by the client
+    if (!title || !description || !type || !category || !location || !salary) {
+      return res.status(400).send({ message: 'All fields are required' });
     }
-  };
-  
-  
+
+    if (!mongoose.Types.ObjectId.isValid(postedBy)) {
+      return res.status(400).json({ error: 'Invalid postedBy ID' });
+    }
+    // Find employer by the provided email to ensure the posting is linked to a valid employer
+    const employer = await Employer.findOne({ email });
+    
+    if (!employer) {
+      return res.status(404).send({ message: 'Employee not found' }); // Handle case when employer does not exist
+    }
+
+    // Create a new job, linking it to the employer's ID, and save it to the database
+    const job = new Job({ title, description, location, salary, category, type, postedBy: employer._id });
+    await job.save();
+
+    // Send a response with the newly created job
+    res.status(201).send(job);
+  } catch (error) {
+    console.error('Error creating job:', error); // Log the error for debugging purposes
+    res.status(500).send({ message: 'Server error', error });
+  }
+};
+
   const getallJob = async (req, res) => {
     try {
       const jobs = await Job.find({});

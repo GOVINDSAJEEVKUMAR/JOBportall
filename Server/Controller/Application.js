@@ -67,8 +67,11 @@ const getApplicants = async (req, res) => {
   try {
     const { id } = req.params; // Employer's ID (from URL params)
 
-    // Step 1: Find all jobs posted by the employer
-    const jobs = await Job.find({ postedBy: id });
+    // Step 1: Convert the employer's ID to a valid ObjectId
+    const employerId = new mongoose.Types.ObjectId(id);
+
+    // Step 2: Find all jobs posted by the employer
+    const jobs = await Job.find({ postedBy: employerId });
 
     if (!jobs || jobs.length === 0) {
       return res.status(404).json({
@@ -80,8 +83,8 @@ const getApplicants = async (req, res) => {
     // Extract job IDs
     const jobIds = jobs.map(job => job._id);
 
-    // Step 2: Find all applications for these jobs
-    const applications = await Application.find({ 'job.id': { $in: jobIds } });
+    // Step 3: Find all applications for these jobs and ensure job.id is also an ObjectId
+    const applications = await Application.find({ 'job.id': { $in: jobIds.map(id => new mongoose.Types.ObjectId(id)) } });
 
     if (!applications || applications.length === 0) {
       return res.status(404).json({
@@ -90,7 +93,7 @@ const getApplicants = async (req, res) => {
       });
     }
 
-    // Step 3: Return the data with jobseeker and job details
+    // Step 4: Return the data with jobseeker and job details
     return res.status(200).json({
       applications: applications.map(application => ({
         jobseeker: {
@@ -116,78 +119,51 @@ const getApplicants = async (req, res) => {
 };
 
 
-  const updateStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-        const applicationId = req.params.id;
-  
-        // Check if the status is provided
-        if (!status) {
-            return res.status(400).json({
-                message: 'Status is required',
-                success: false,
-            });
-        }
-  
-        const application = await Application.findById(applicationId);
-        if (!application) {
-            return res.status(404).json({
-                message: "Application not found.",
-                success: false,
-            });
-        }
-  
-        // Define valid statuses with original casing
-        const validStatuses = ['Pending', 'Accepted', 'Rejected'];
-        const trimmedStatus = status.trim();
-  
-        if (!validStatuses.includes(trimmedStatus)) {
-            return res.status(400).json({
-                message: `"${status}" is not a valid status.`,
-                success: false,
-            });
-        }
-  
-        // Set the new status
-        application.status = trimmedStatus;
-  
-        // Save the updated application
-        await application.save();
-  
-        return res.status(200).json({
-            message: "Status updated successfully.",
-            success: true,
-            updatedStatus: application.status,
-        });
-    } catch (error) {
-        console.error("Error updating status:", error);
-        res.status(500).json({
-            message: "Server error",
-            success: false,
-        });
-    }
-  };
 
 
-  const getMyApplication = async (req, res) => {
-    try {
-      const { jobseekerId } = req.params;
-      console.log("Jobseeker ID:", jobseekerId);
+const updateStatus = async (req, res) => {
+  const { Id } = req.params;
   
-      // Fetch applications by jobseekerId
-      const applications = await Application.find({ Jobseeker: jobseekerId });
-      console.log("Applications found:", applications);
-  
-      if (applications.length === 0) {
-        return res.status(404).json({ msg: 'No applications found for this jobseeker' });
-      }
-  
-      return res.status(200).json(applications);
-    } catch (error) {
-      console.error('Error retrieving applications:', error.message);
-      return res.status(500).json({ msg: error.message });
+  if (!Id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({ message: 'Invalid application ID format' });
+  }
+
+  const { status } = req.body;
+
+  try {
+    const updatedApplicant = await Application.findByIdAndUpdate(Id, { status }, { new: true });
+
+    if (!updatedApplicant) {
+      return res.status(404).json({ message: 'Applicant not found' });
     }
-  };
+
+    res.status(200).json({ message: 'Status updated successfully', applicant: updatedApplicant });
+  } catch (error) {
+    console.error('Error updating applicant status:', error);
+    res.status(500).json({ message: 'Failed to update status' });
+  }
+};
+
+
+
+const getMyApplication = async (req, res) => {
+  const jobseekerId = req.params.id; // Extract jobseeker ID from URL params
+
+  try {
+    // Fetch all applications by the jobseeker ID
+    const applications = await Application.find({ 'jobseeker.id': jobseekerId }).populate('job.id', 'title location').populate('jobseeker.id', 'name email phone');
+    
+    if (!applications.length) {
+      return res.status(404).json({ message: 'No applications found for this jobseeker' });
+    }
+
+    // Return the list of applications
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
+};
 
 
 
@@ -226,7 +202,7 @@ const getApplicants = async (req, res) => {
   module.exports = {
     ApplyJob, 
     getApplicants,
-     updateStatus, 
+    updateStatus, 
      getMyApplication, 
      getall, 
      getMypost}

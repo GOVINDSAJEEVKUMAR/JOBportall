@@ -29,7 +29,7 @@ const SignUp = async (req, res) => {
 
         // Create a new user or employer instance based on the role
         let newUser;
-        if (role === 'Jobseeker') {
+        if (role === 'Job Seeker') {
             newUser = new User({
                 name,
                 age,
@@ -112,16 +112,32 @@ const Get = async (req, res) => {
 };
 const getUser = async (req, res) => {
     try {
+        // Try finding the user in the User model
         let user = await User.findById(req.params.id);
+        
+        // If not found in User, try finding in the Employee model
         if (!user) {
             user = await Employee.findById(req.params.id);
-            if (!user) return res.status(404).json({ message: 'User not found' });
         }
+
+        // If not found in Employee, try finding in the Employer model
+        if (!user) {
+            user = await Employer.findById(req.params.id);
+        }
+
+        // If still not found, return a 404 error
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // If found in any of the models, return the user data
         res.json(user);
     } catch (err) {
+        // Handle any errors that occur
         res.status(500).json({ message: err.message });
     }
 };
+
 
 const Login = async (req, res) => {
     const { email, password } = req.body;

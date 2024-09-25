@@ -1,14 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { userAuth } from '../../Conetxt/userAuth'; // Adjust the path as necessary
 
 const Navbar = () => {
-  const { setToken, setUser, token,user } = userAuth(); // Pulling from Auth context
+  const { setToken, setUser, token, user } = userAuth(); // Pulling from Auth context
   const navigate = useNavigate();
   const { _id } = useParams();
 
-  // Redirect if already logged in (checking for absence of token to log out)
+  // State to control dropdown visibility
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Redirect if not logged in (checking for absence of token to log out)
   useEffect(() => {
     if (!token) {
       navigate('/login'); // Redirect to login page if no token
@@ -18,11 +21,15 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       // Send logout request to the server if needed
-      await axios.post('http://localhost:8070/auth/logout', {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.post(
+        'http://localhost:8070/auth/logout',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Corrected token handling
+          },
+        }
+      );
 
       // Clear the token and user information
       setToken(null);
@@ -36,33 +43,61 @@ const Navbar = () => {
     }
   };
 
-  // const imageUrl = `http://localhost:8070/uploads/${user.profilePhoto}`;
+  // Toggle dropdown on profile picture click
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
   return (
-    <nav className="bg-gray-900 text-white  flex justify-between items-center">
+    <nav className="bg-gray-900 text-white flex justify-between items-center p-4">
       {/* Left section (Logo) */}
-      <div className="flex items-center">
-        <div className="text-xl font-bold tracking-wider">
-          JOB PORTAL
+      <div className="text-xl font-bold tracking-wider">JOB PORTAL</div>
+
+      {/* Right section (Links and Profile) */}
+      <div className="relative">
+        <div className="flex items-center space-x-8">
+          <Link to="/job" className="hover:text-gray-400">
+            Back
+          </Link>
+
+          {/* Profile Picture and Dropdown */}
+          <div className="relative">
+            <button onClick={toggleDropdown} className="focus:outline-none">
+              {user?.profilePhoto && (
+                <img
+                  className="rounded-full w-10 h-10 object-cover"
+                  src={`http://localhost:8070/uploads/${user.profilePhoto}`}
+                  alt="Profile"
+                />
+              )}
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 m-5 w-[20rem] bg-white text-black rounded-2xl shadow-lg z-20">
+                <Link
+                  to={`/profile/${user._id}`}
+                  className="block px-4 py-2 hover:bg-gray-300"
+                  onClick={() => setDropdownOpen(false)} // Close dropdown on link click
+                >
+                  Profile
+                </Link>
+                <Link
+                  to={`/applied/${user._id}`}
+                  className="block px-4 py-2 hover:bg-gray-300"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Applied Jobs
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-300 hover:text-red-500"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* Right section (Links) */}
-      <div className="flex items-center space-x-8">
-        <Link to="/job">back</Link>
-        <button onClick={() => navigate(`/profile/${user._id}`)}>
-        <img
-  className="rounded-full w-10 h-10 object-cover"
-  src={`http://localhost:8070/uploads/${user.profilePhoto}`} 
-  alt="Profile"
-/>
-
-        </button>
-        <button
-          onClick={handleLogout}
-          className="hover:text-red-500 text-xl bg-black p-2 m-3 rounded-full transition-colors duration-200"
-        >
-          Logout
-        </button>
       </div>
     </nav>
   );

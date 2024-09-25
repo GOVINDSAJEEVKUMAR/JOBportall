@@ -97,31 +97,19 @@ const isAuthorized = (...roles) => {
     };
 };
 
-const authenticateEmployee = (requiredRole) => {
-    return async (req, res, next) => {
-      try {
-        const token = req.headers.authorization.split(' ')[1]; // Get token from header
-        const decoded = jwt.verify(token, process.env.SECRET_KEY); // Verify token
-  
-        // Find employee by the ID stored in the token
-        const employee = await Employee.findById(decoded.id);
-  
-        if (!employee) {
-          return res.status(401).json({ message: 'Unauthorized' });
-        }
-  
-        // Check if the employee has the required role
-        if (employee.role !== requiredRole) {
-          return res.status(403).json({ message: 'Forbidden' });
-        }
-  
-        // Attach the employee object to the request object
-        req.employee = employee;
-        next(); // Proceed to the next middleware or route handler
-      } catch (error) {
-        console.error('Error in authenticateEmployee:', error.message);
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-    };
-  };
-module.exports = { userVerification, refreshToken, auth ,restrict, isAuthenticated, isAuthorized, authenticateEmployee };
+const authenticateUser = async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ message: "Unauthorized", success: false });
+    }
+    
+    try {
+        const decoded = jwt.verify(token, 'JOBportal'); // Use your actual secret key
+        req.user = await User.findById(decoded.id).select('-password'); // Exclude password from user object
+        next();
+    } catch (error) {
+        console.error("Authentication error:", error);
+        res.status(403).json({ message: "Invalid token", success: false });
+    }
+};
+module.exports = { userVerification, refreshToken, auth ,restrict, isAuthenticated, isAuthorized, authenticateUser };

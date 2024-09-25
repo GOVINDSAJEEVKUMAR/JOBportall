@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Navbar from '../../Components/CommonPage/Nav'; // Adjust the import path as necessary
+ // Adjust the import path as necessary
 import { useNavigate, useParams } from 'react-router-dom';
 import { userAuth } from '../../Conetxt/userAuth';
 import { FiEdit2, FiMapPin, FiPhone, FiMail, FiCalendar, FiCheckCircle } from 'react-icons/fi'; // Icons
+import Sidebar from './Sidebar';
 
 const UserDetailsPage = () => {
   const { _id } = useParams(); // Get the user ID from the URL params
@@ -24,8 +25,8 @@ const UserDetailsPage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        console.log('Fetching data for userId:', _id); // Log userId
-        const response = await axios.get(`http://localhost:8070/auth/user/${_id}`);
+        console.log('Fetching data for userId:',user._id); // Log userId
+        const response = await axios.get(`http://localhost:8070/auth/user/${user._id}`);
         console.log('User data:', response.data); // Log the fetched data
         setUserData(response.data);
       } catch (err) {
@@ -45,8 +46,9 @@ const UserDetailsPage = () => {
   if (!userData) return <div>No user data found</div>;
 
   return (
-    <div>
-      <Navbar />
+    <div className="min-h-screen bg-white flex">
+      <Sidebar/>
+      <div className="flex-1 p-6">
       <div className="container mx-auto px-4 py-8 bg-gray-100">
         <div className="bg-white shadow-lg rounded-lg p-8">
           <div className="flex justify-between items-center">
@@ -65,7 +67,7 @@ const UserDetailsPage = () => {
                 <p className="text-gray-600">Profile last updated - Today</p>
               </div>
             </div>
-            <FiEdit2 className="text-gray-500 hover:text-gray-700 cursor-pointer" size={20} />
+            {/* <FiEdit2 className="text-gray-500 hover:text-gray-700 cursor-pointer" size={20} /> */}
           </div>
 
           {/* Information Section */}
@@ -154,6 +156,7 @@ const UserDetailsPage = () => {
             </div>
           </div>
         
+      </div>
       </div>
     </div>
   );

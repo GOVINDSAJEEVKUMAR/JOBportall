@@ -27,7 +27,11 @@ const ApplicantsList = () => {
   useEffect(() => {
     const fetchApplicantsAndJobDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:8070/apply/application/${postedBy}`);
+        const response = await axios.get(`http://localhost:8070/apply/application/${postedBy}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (response.data) {
           const { applications, job } = response.data;
           setApplicants(applications);
@@ -41,31 +45,37 @@ const ApplicantsList = () => {
     };
 
     fetchApplicantsAndJobDetails();
-  }, [postedBy]);
+  }, [postedBy, token]);
 
-  const handleStatusUpdate = async (applicantId, newStatus) => {
-    setStatusUpdating(applicantId);
+  const handleStatusUpdate = async (Id, newStatus) => {
+    console.log("Updating applicant with ID:", Id); // Debugging log
+    setStatusUpdating(Id); // This disables the button during the update process
+  
     try {
-      // Use the correct applicantId for the PUT request
-      await axios.put(`http://localhost:8070/apply/update/${applicantId}`, { status: newStatus }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      // Update the status in the local state
+      await axios.put(
+        `http://localhost:8070/apply/update/${Id}`,  // Passes applicantId in the URL
+        { status: newStatus },  // Passes the new status in the request body
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,  // Authorization token
+          },
+        }
+      );
+  
+      // Update the local state after successful response
       setApplicants((prevApplicants) =>
         prevApplicants.map((applicant) =>
-          applicant._id === applicantId
-            ? { ...applicant, status: newStatus }
-            : applicant
+          applicant._id === Id ? { ...applicant, status: newStatus } : applicant
         )
       );
-      setStatusUpdating(null);
+      setStatusUpdating(null);  // Re-enable the buttons
     } catch (error) {
+      console.error("Error updating status:", error);
       setError("Failed to update status");
       setStatusUpdating(null);
     }
   };
+  
 
   if (loading) {
     return <div>Loading...</div>;
@@ -90,12 +100,6 @@ const ApplicantsList = () => {
               <span className="ml-4 text-gray-600">Rejected(s): 48</span>
             </div>
           </div>
-          <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between items-center font-bold">
-            <p>JOB</p>
-            <p>NAME</p>
-            <p>RESUME</p>
-            <p>STATUS</p>
-          </div>
 
           {jobDetails && (
             <div className="bg-white shadow-md rounded-lg p-4 mb-6">
@@ -105,6 +109,13 @@ const ApplicantsList = () => {
               <p className="text-gray-600">Salary: {jobDetails.salary}</p>
             </div>
           )}
+
+          <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between items-center font-bold">
+            <p>JOB</p>
+            <p>NAME</p>
+            <p>RESUME</p>
+            <p>STATUS</p>
+          </div>
 
           <div>
             {applicants.length > 0 ? (
@@ -137,6 +148,7 @@ const Applicant = ({ id, name, status, role, appliedDate, jobTitle, resumeUrl, o
   return (
     <div className="flex justify-between bg-white shadow-md rounded-lg p-4 mb-4 font-serif">
       <p className="text-gray-600 font-bold">{jobTitle}</p>
+
       <h3 className="font-bold text-gray-700">{name}</h3>
       
       <div className="flex gap-x-2 items-center">

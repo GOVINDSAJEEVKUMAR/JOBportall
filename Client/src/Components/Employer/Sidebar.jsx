@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { userAuth } from "../../Conetxt/userAuth";
 import { FaChartBar, FaInbox, FaUserAlt, FaSearch, FaFolder, FaSignOutAlt } from "react-icons/fa";
 import { AiOutlineUser } from "react-icons/ai";
@@ -7,8 +7,9 @@ import axios from 'axios'; // Import axios for making HTTP requests.
 
 const Sidebar = () => {
   const [open, setOpen] = useState(true);
-  const { token, setToken, setUser } = userAuth();
+  const { token, setToken, setUser, user } = userAuth();
   const navigate = useNavigate(); // Use useNavigate for navigation
+  const { _id } = useParams();
 
   // Function to handle logout
   const handleLogout = async () => {
@@ -30,7 +31,7 @@ const Sidebar = () => {
   const Menus = [
     { title: "Dashboard", icon: <FaChartBar />, path: "/dashboard" },
     { title: "Inbox", icon: <FaInbox />, path: "/inbox" },
-    { title: "Accounts", icon: <FaUserAlt />, path: "/accounts", gap: true },
+    { title: "Accounts", icon: <FaUserAlt />, path: `/eprofile/${user._id}`, gap: true },
     { title: "Applicants", icon: <AiOutlineUser />, path: "/applicant" },
     { title: "Search", icon: <FaSearch />, path: "/search" },
     { title: "Analytics", icon: <FaChartBar />, path: "/analytics" },
@@ -38,8 +39,8 @@ const Sidebar = () => {
     {
       title: "Logout",
       icon: <FaSignOutAlt />,
-      onClick: handleLogout  // Attach the logout handler
-    }
+      onClick: handleLogout,  // Attach the logout handler
+    },
   ];
 
   return (
@@ -51,6 +52,7 @@ const Sidebar = () => {
           className={`absolute cursor-pointer -right-3 top-9 w-7 border-dark-purple border-2 rounded-full ${!open && "rotate-180"}`}
           onClick={() => setOpen(!open)}
           alt="Toggle"
+          aria-label="Toggle sidebar"
         />
 
         {/* Logo Section */}

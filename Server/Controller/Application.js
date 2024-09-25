@@ -123,12 +123,15 @@ const getApplicants = async (req, res) => {
 
 const updateStatus = async (req, res) => {
   const { Id } = req.params;
-  
-  if (!Id.match(/^[0-9a-fA-F]{24}$/)) {
-    return res.status(400).json({ message: 'Invalid application ID format' });
-  }
-
   const { status } = req.body;
+
+  console.log("ID :", Id);
+  console.log("Status :", status);
+
+  // Check if Id is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(Id)) {
+    return res.status(400).json({ message: 'Invalid Applicant ID' });
+  }
 
   try {
     const updatedApplicant = await Application.findByIdAndUpdate(Id, { status }, { new: true });
@@ -140,7 +143,7 @@ const updateStatus = async (req, res) => {
     res.status(200).json({ message: 'Status updated successfully', applicant: updatedApplicant });
   } catch (error) {
     console.error('Error updating applicant status:', error);
-    res.status(500).json({ message: 'Failed to update status' });
+    res.status(500).json({ message: error });
   }
 };
 

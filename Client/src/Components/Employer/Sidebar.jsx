@@ -32,7 +32,7 @@ const Sidebar = () => {
     { title: "Dashboard", icon: <FaChartBar />, path: "/dashboard" },
     { title: "Inbox", icon: <FaInbox />, path: "/inbox" },
     { title: "Accounts", icon: <FaUserAlt />, path: `/eprofile/${user._id}`, gap: true },
-    { title: "Applicants", icon: <AiOutlineUser />, path: "/applicant" },
+    { title: "Applicants", icon: <AiOutlineUser />, path: `/applicant` },
     { title: "Search", icon: <FaSearch />, path: "/search" },
     { title: "Analytics", icon: <FaChartBar />, path: "/analytics" },
     { title: "Files", icon: <FaFolder />, path: "/files", gap: true },

@@ -62,6 +62,7 @@ const ApplicantsList = () => {
         }
       );
   
+  
       // Update the local state after successful response
       setApplicants((prevApplicants) =>
         prevApplicants.map((applicant) =>

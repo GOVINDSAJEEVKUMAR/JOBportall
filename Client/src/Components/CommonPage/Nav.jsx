@@ -56,10 +56,6 @@ const Navbar = () => {
       {/* Right section (Links and Profile) */}
       <div className="relative">
         <div className="flex items-center space-x-8">
-          <Link to="/job" className="hover:text-gray-400">
-            Back
-          </Link>
-
           {/* Profile Picture and Dropdown */}
           <div className="relative">
             <button onClick={toggleDropdown} className="focus:outline-none">
@@ -87,6 +83,13 @@ const Navbar = () => {
                   onClick={() => setDropdownOpen(false)}
                 >
                   Applied Jobs
+                </Link>
+                <Link
+                  to="/job"
+                  className="block px-4 py-2 hover:bg-gray-300"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Back
                 </Link>
                 <button
                   onClick={handleLogout}

@@ -2,6 +2,7 @@ const express = require ("express")
 const User = require ("../Model/UserSchema")
 const Employer = require ("../Model/EmployerSchema")
 const Job = require ("../Model/JobSchema")
+const mongoose = require ("mongoose")
 
 
 
@@ -15,9 +16,9 @@ const newJob = async (req, res) => {
       return res.status(400).send({ message: 'All fields are required' });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(postedBy)) {
-      return res.status(400).json({ error: 'Invalid postedBy ID' });
-    }
+    // if (!mongoose.Types.ObjectId.isValid(postedBy)) {
+    //   return res.status(400).json({ error: 'Invalid postedBy ID' });
+    // }
     // Find employer by the provided email to ensure the posting is linked to a valid employer
     const employer = await Employer.findOne({ email });
     

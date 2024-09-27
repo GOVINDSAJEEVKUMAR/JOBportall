@@ -67,8 +67,11 @@ const getApplicants = async (req, res) => {
   try {
     const { id } = req.params; // Employer's ID (from URL params)
 
-    // Step 1: Convert the employer's ID to a valid ObjectId
-    const employerId = new mongoose.Types.ObjectId(id);
+    // Step 1: Validate the employer's ID to ensure it's a valid ObjectId
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid employer ID.' });
+    }
+    const employerId = id; // Use the validated id directly
 
     // Step 2: Find all jobs posted by the employer
     const jobs = await Job.find({ postedBy: employerId });
@@ -80,11 +83,11 @@ const getApplicants = async (req, res) => {
       });
     }
 
-    // Extract job IDs
+    // Extract job IDs from the jobs
     const jobIds = jobs.map(job => job._id);
 
-    // Step 3: Find all applications for these jobs and ensure job.id is also an ObjectId
-    const applications = await Application.find({ 'job.id': { $in: jobIds.map(id => new mongoose.Types.ObjectId(id)) } });
+    // Step 3: Find all applications for these jobs and ensure job.id is converted properly
+    const applications = await Application.find({ 'job.id': { $in: jobIds } });
 
     if (!applications || applications.length === 0) {
       return res.status(404).json({
@@ -97,13 +100,13 @@ const getApplicants = async (req, res) => {
     return res.status(200).json({
       applications: applications.map(application => ({
         jobseeker: {
+          id: application.jobseeker.id,
           name: application.jobseeker.name,
           email: application.jobseeker.email,
           phone: application.jobseeker.phone,
         },
         job: {
           title: application.job.title,
-          company: application.job.company,
           location: application.job.location,
           salary: application.job.salary,
         },
@@ -118,32 +121,33 @@ const getApplicants = async (req, res) => {
   }
 };
 
-
-
-
 const updateStatus = async (req, res) => {
-  const { Id } = req.params;
-  const { status } = req.body;
-
-  console.log("ID :", Id);
-  console.log("Status :", status);
-
-  // Check if Id is a valid ObjectId
-  if (!mongoose.Types.ObjectId.isValid(Id)) {
-    return res.status(400).json({ message: 'Invalid Applicant ID' });
-  }
+  const { jobseekerid } = req.params; // Extract jobseekerid from the URL parameters
+  const { status } = req.body; // Extract the new status from the request body
 
   try {
-    const updatedApplicant = await Application.findByIdAndUpdate(Id, { status }, { new: true });
+    // Find the application by jobseeker id and update the status
+    const application = await Application.findOneAndUpdate(
+      { 'application.jobseeker.id': jobseekerid }, // Query to find the application
+      { status: status }, // The update
+      { new: true } // Return the updated document
+    );
 
-    if (!updatedApplicant) {
-      return res.status(404).json({ message: 'Applicant not found' });
+    // If no application found, return a 404 error
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
     }
 
-    res.status(200).json({ message: 'Status updated successfully', applicant: updatedApplicant });
+    // Return the updated application
+    return res.status(200).json({
+      message: 'Application status updated successfully',
+      application: application,
+      
+      
+    });
   } catch (error) {
-    console.error('Error updating applicant status:', error);
-    res.status(500).json({ message: error });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

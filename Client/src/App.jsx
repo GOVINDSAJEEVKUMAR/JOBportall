@@ -14,6 +14,7 @@ import ApplicantsList from './Components/Employer/Applicant'
 import JobPost from "./Components/Employer/JobPost"
 import Profile from "./Components/Employer/Profile"
 import Applied from './Components/JobSeeker/Applied'
+import EditJobModal from './Components/Employer/EditJob'
 
 
 const App = () => {
@@ -36,6 +37,7 @@ const App = () => {
         <Route path ="/applicant" element={<ApplicantsList/>}/>
         <Route path='/dashboard' element={<Dashboard />}/>
         <Route path="/post" element={<JobPost/>}/>
+        <Route path='/edit/:id' element={<EditJobModal/>}/>
         <Route path='/eprofile/:id' element={<Profile />} />
       </Routes>
 

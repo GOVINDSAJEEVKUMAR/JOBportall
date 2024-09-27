@@ -2,21 +2,22 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaEye } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
-import { userAuth } from "../../Conetxt/userAuth";
+import { userAuth } from "../../Conetxt/userAuth"; // Corrected path
 import Sidebar from "./Sidebar";
+import { toast } from "react-hot-toast";
 
 const ApplicantsList = () => {
   const [applicants, setApplicants] = useState([]);
   const [jobDetails, setJobDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [statusUpdating, setStatusUpdating] = useState(null); // State to track which applicant is being updated
-  const { token } = userAuth(); // Pulling token from Auth context
+  const [statusUpdating, setStatusUpdating] = useState(null);
+  const { token } = userAuth(); // Get token from Auth context
   const navigate = useNavigate();
-  const { user } = userAuth(); // Getting the logged-in user from context
-  const { _Id } = useParams();  // Getting the _Id from URL params if provided
+  const { user } = userAuth(); // Get the logged-in user from context
+  const { _id } = useParams(); // Get _id from URL params
 
-  const postedBy = user ? user._id : _Id;
+  const postedBy = user ? user._id : _id;
 
   useEffect(() => {
     if (!token) {
@@ -35,11 +36,15 @@ const ApplicantsList = () => {
         if (response.data) {
           const { applications, job } = response.data;
           setApplicants(applications);
+          // console.log(response.data);
+          
           setJobDetails(job);
+          toast.success("Applicants loaded successfully");
         }
-        setLoading(false);
       } catch (err) {
         setError("Failed to load applicants data or job details");
+        console.error(err); // Log the error for debugging
+      } finally {
         setLoading(false);
       }
     };
@@ -47,44 +52,54 @@ const ApplicantsList = () => {
     fetchApplicantsAndJobDetails();
   }, [postedBy, token]);
 
-  const handleStatusUpdate = async (Id, newStatus) => {
-    console.log("Updating applicant with ID:", Id); // Debugging log
-    setStatusUpdating(Id); // This disables the button during the update process
-  
+  const handleStatusUpdate = async (applicant) => {
+    if (!applicant || !applicant.jobseeker || !applicant.jobseeker.id) {
+      console.error("Applicant or jobseeker ID is not defined.");
+      toast.error("Error: Invalid applicant data.");
+      return;
+    }
+
+    const jobseekerId = applicant.jobseeker.id;
+    const newStatus = applicant.status === "Accepted" ? "Rejected" : "Accepted";
+
+    setStatusUpdating(applicant._id);
+    
     try {
-      await axios.put(
-        `http://localhost:8070/apply/update/${Id}`,  // Passes applicantId in the URL
-        { status: newStatus },  // Passes the new status in the request body
+      const response = await axios.put(
+        `http://localhost:8070/apply/update/${jobseekerId}`,
+        { status: newStatus },
         {
           headers: {
-            Authorization: `Bearer ${token}`,  // Authorization token
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-  
-  
-      // Update the local state after successful response
-      setApplicants((prevApplicants) =>
-        prevApplicants.map((applicant) =>
-          applicant._id === Id ? { ...applicant, status: newStatus } : applicant
-        )
-      );
-      setStatusUpdating(null);  // Re-enable the buttons
+
+      if (response.status === 200) {
+        setApplicants((prevApplicants) =>
+          prevApplicants.map((app) =>
+            app._id === applicant._id ? { ...app, status: newStatus } : app
+          )
+        );
+        console.log("Status updated:", response.data);
+        
+        toast.success(`Status updated to "${newStatus}" successfully!`);
+      } else {
+        toast.error("Failed to update status.");
+      }
     } catch (error) {
       console.error("Error updating status:", error);
-      setError("Failed to update status");
+      toast.error("Failed to update status.");
+    } finally {
       setStatusUpdating(null);
     }
   };
-  
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const approvedCount = applicants.filter(applicant => applicant.status === 'Accepted').length;
+  const rejectedCount = applicants.filter(applicant => applicant.status === 'Rejected').length;
 
-  if (error) {
-    return <div>{error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="flex">
@@ -97,8 +112,8 @@ const ApplicantsList = () => {
               <button className="bg-blue-600 text-white py-1 px-4 rounded">
                 Total(s): {applicants.length}
               </button>
-              <span className="ml-4 text-gray-600">Approved: 228</span>
-              <span className="ml-4 text-gray-600">Rejected(s): 48</span>
+              <span className="ml-4 text-gray-600">Approved: {approvedCount}</span>
+              <span className="ml-4 text-gray-600">Rejected: {rejectedCount}</span>
             </div>
           </div>
 
@@ -123,13 +138,7 @@ const ApplicantsList = () => {
               applicants.map((applicant) => (
                 <Applicant
                   key={applicant._id}
-                  id={applicant._id}
-                  name={applicant.jobseeker.name}
-                  status={applicant.status}
-                  role={applicant.jobseeker.role}
-                  appliedDate={applicant.appliedDate}
-                  jobTitle={applicant.job.title}
-                  resumeUrl={applicant.resume}
+                  applicant={applicant} // Pass whole applicant object
                   onStatusUpdate={handleStatusUpdate}
                   statusUpdating={statusUpdating}
                 />
@@ -144,52 +153,49 @@ const ApplicantsList = () => {
   );
 };
 
-// Applicant Component
-const Applicant = ({ id, name, status, role, appliedDate, jobTitle, resumeUrl, onStatusUpdate, statusUpdating }) => {
-  return (
-    <div className="flex justify-between bg-white shadow-md rounded-lg p-4 mb-4 font-serif">
-      <p className="text-gray-600 font-bold">{jobTitle}</p>
+const Applicant = React.memo(({ applicant, onStatusUpdate, statusUpdating }) => {
+  const { _id, jobseeker, status, job } = applicant;
 
-      <h3 className="font-bold text-gray-700">{name}</h3>
-      
-      <div className="flex gap-x-2 items-center">
-        {resumeUrl && (
-          <a
-            href={`http://localhost:8070/${resumeUrl}`} // Corrected resumeUrl
-            target="view resume"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
+  return (
+    <div className="flex justify-between items-center bg-white shadow-md rounded-lg p-4 mb-4 font-serif">
+      <p className="text-gray-600 font-bold">{job.title}</p>
+      <h3 className="font-bold text-gray-700">{jobseeker.name}</h3>
+
+      <div className="flex gap-4 items-center">
+        <a
+          href={`http://localhost:8070/${applicant.resume}`}
+          target="_blank"
+          className="text-blue-500 hover:text-blue-700"
+          rel="noreferrer"
+        >
+          <FaEye className="inline-block mr-2" />
+          View Resume
+        </a>
+
+        <p className={`font-semibold ${status === "Accepted" ? "text-green-500" : "text-red-500"}`}>
+          {status}
+        </p>
+
+        <div className="flex gap-2">
+          <button
+            className={`${statusUpdating === _id ? "opacity-50 cursor-not-allowed" : ""} px-4 py-2 bg-blue-500 text-white rounded-md`}
+            onClick={() => onStatusUpdate(applicant)} // Pass the applicant directly
+            disabled={statusUpdating === _id || status === "Accepted"}
           >
-            <FaEye size={36} />
-          </a>
-        )}
-      </div>
-      
-      <div className="flex gap-x-2">
-        <button
-          onClick={() => onStatusUpdate(id, 'Pending')}
-          disabled={statusUpdating === id}
-          className={`py-1 px-3 rounded ${statusUpdating === id ? 'bg-gray-400' : 'bg-gray-600 text-white'}`}
-        >
-          Pending
-        </button>
-        <button
-          onClick={() => onStatusUpdate(id, 'Accepted')}
-          disabled={statusUpdating === id}
-          className={`py-1 px-3 rounded ${statusUpdating === id ? 'bg-gray-400' : 'bg-green-600 text-white'}`}
-        >
-          Accept
-        </button>
-        <button
-          onClick={() => onStatusUpdate(id, 'Rejected')}
-          disabled={statusUpdating === id}
-          className={`py-1 px-3 rounded ${statusUpdating === id ? 'bg-gray-400' : 'bg-yellow-600 text-white'}`}
-        >
-          Reject
-        </button>
+            Approve
+          </button>
+          <button
+            className={`${statusUpdating === _id ? "opacity-50 cursor-not-allowed" : ""} px-4 py-2 bg-red-500 text-white rounded-md`}
+            onClick={() => onStatusUpdate(applicant)} // Pass the applicant directly
+            disabled={statusUpdating === _id || status === "Rejected"}
+          >
+            Reject
+          </button>
+        </div>
       </div>
     </div>
   );
-};
+});
 
 export default ApplicantsList;
+

@@ -108,7 +108,7 @@ const DataFetchingComponent = () => {
         <div className="w-full md:w-1/3 lg:w-1/5 p-4 border rounded-lg shadow-md space-y-10 bg-white">
           <h2 className="text-xl font-bold mb-4">Filter <FaFilter className="inline" /></h2>
           <input name="title" placeholder="Title" value={filter.title} onChange={handleFilterChange} className="p-2 border rounded mb-2 w-full" />
-          <input name="company" placeholder="Company" value={filter.company} onChange={handleFilterChange} className="p-2 border rounded mb-2 w-full" />
+          {/* <input name="company" placeholder="Company" value={filter.company} onChange={handleFilterChange} className="p-2 border rounded mb-2 w-full" /> */}
           <input name="location" placeholder="Location" value={filter.location} onChange={handleFilterChange} className="p-2 border rounded mb-2 w-full" />
           <select name="type" value={filter.type} onChange={handleFilterChange} className="p-2 border rounded w-full">
             <option value="">Select Type</option>
@@ -169,7 +169,7 @@ const DataFetchingComponent = () => {
                     Posted Date: {item.postedDate}
                   </p>
                   <p className="text-sm mb-2">Location: {item.location}</p>
-                  {renderSkills(item.skills || [])} {/* Ensure skills is always an array */}
+                  {/* {renderSkills(item.skills || [])} Ensure skills is always an array */}
                   <div className="flex justify-between items-center mt-4">
                     <button
                       onClick={() => handleApplyClick(item)}

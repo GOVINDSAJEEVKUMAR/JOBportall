@@ -1,4 +1,6 @@
 import React from 'react'
+// import "dotenv/config"
+// require('dotenv').config();
 import { useNavigate, Routes, Route } from 'react-router-dom'
 import {Toaster} from "react-hot-toast"
 import Home from './Components/CommonPage/Home'

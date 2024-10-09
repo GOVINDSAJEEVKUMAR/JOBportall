@@ -122,31 +122,36 @@ const getApplicants = async (req, res) => {
 };
 
 const updateStatus = async (req, res) => {
-  const { jobseekerid } = req.params; // Extract jobseekerid from the URL parameters
+  const { jobseekerid, applicationid } = req.params; // Extract jobseekerid and applicationid from URL parameters
   const { status } = req.body; // Extract the new status from the request body
 
-  try {
-    // Find the application by jobseeker id and update the status
-    const application = await Application.findOneAndUpdate(
-      { 'application.jobseeker.id': jobseekerid }, // Query to find the application
-      { status: status }, // The update
-      { new: true } // Return the updated document
-    );
+  // Log both ids to ensure they are correct
+  console.log('Jobseeker ID:', jobseekerid);
+  console.log('Application ID:', applicationid);
+  console.log('Request Body:', req.body); // Log request body
 
-    // If no application found, return a 404 error
+  try {
+    // Find application by application ID first, if it exists
+    const application = await Application.findOne({
+      _id: applicationid,
+      'jobseeker.id': jobseekerid, // Make sure jobseeker.id exists in the Application model
+    });
+
     if (!application) {
       return res.status(404).json({ message: 'Application not found' });
     }
+
+    // Update the status of the application
+    application.status = status;
+    await application.save();
 
     // Return the updated application
     return res.status(200).json({
       message: 'Application status updated successfully',
       application: application,
-      
-      
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error updating application status:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

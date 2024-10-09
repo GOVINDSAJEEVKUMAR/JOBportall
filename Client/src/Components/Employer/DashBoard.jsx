@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import { userAuth } from "../../Conetxt/userAuth"; // Ensure correct import
+import { userAuth } from "../../Conetxt/userAuth";
 import Sidebar from "./Sidebar";
-import { FaEdit, FaTrashAlt } from "react-icons/fa"; // Importing icons
-import EditJobModal from "./EditJob"; // Import Edit Modal
+import { FaEdit, FaTrashAlt, FaBriefcase, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
+import EditJobModal from "./EditJob";
 
 const MyPosts = () => {
   const [posts, setPosts] = useState([]);
@@ -13,36 +13,40 @@ const MyPosts = () => {
   const [error, setError] = useState("");
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  
-  const { setToken, setUser, token } = userAuth(); // Pulling from Auth context
-  const navigate = useNavigate();
-  const { user } = userAuth(); // Getting the logged-in user from context
-  const { _Id } = useParams();  // Getting the _Id from URL params if provided
+  const [statistics, setStatistics] = useState({ posted: 0, shortlisted: 0, applications: 0 }); // New state for statistics
 
-  // Use the logged-in user's ID, or fallback to the _Id from params
+  const { setToken, setUser, token } = userAuth();
+  const navigate = useNavigate();
+  const { user } = userAuth();
+  const { _Id } = useParams();
+
   const postedBy = user ? user._id : _Id;
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!token) {
-      navigate("/login"); // Redirect to login if no token is found
+      navigate("/login");
     }
   }, [token, navigate]);
 
-  // Define the fetchPosts function
   const fetchPosts = async () => {
-    setLoading(true); // Set loading state
+    setLoading(true);
     try {
       const response = await axios.get(`http://localhost:8070/apply/mypost/${postedBy}`);
-      setPosts(response.data); // Set the fetched posts in state
+      setPosts(response.data);
+      
+      // Calculate statistics based on fetched posts
+      setStatistics({
+        posted: response.data.length,
+        shortlisted: response.data.filter(job => job.shortlisted).length, // Adjust this condition based on your data
+        applications: response.data.filter(job => job.applied).length, // Adjust this condition based on your data
+      });
     } catch (error) {
       setError("Error fetching posts");
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
-  // Fetch posts on component mount
   useEffect(() => {
     if (postedBy) {
       fetchPosts();
@@ -59,14 +63,13 @@ const MyPosts = () => {
     }
 
     try {
-      const response = await axios.delete(`http://localhost:8070/job/delete/${id}`, {
+      await axios.delete(`http://localhost:8070/job/delete/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response.data);
       toast.success("Job deleted successfully");
-      setPosts(posts.filter((job) => job._id !== id)); // Remove deleted job from state
+      setPosts(posts.filter((job) => job._id !== id));
     } catch (error) {
       console.error("Failed to delete job:", error);
       toast.error("Failed to delete job");
@@ -74,8 +77,8 @@ const MyPosts = () => {
   };
 
   const handleEdit = (job) => {
-    setSelectedJob(job); // Set selected job
-    setEditModalOpen(true); // Open the modal
+    setSelectedJob(job);
+    setEditModalOpen(true);
   };
 
   const closeEditModal = () => {
@@ -87,72 +90,101 @@ const MyPosts = () => {
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="flex">
       <Sidebar />
-      <div className="flex-1 p-6">
-        <div className="w-full flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Applications Statistics</h1>
+      <div className="flex-1 p-6 bg-gray-50">
+        <div className="w-full flex flex-col md:flex-row justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold mb-4 md:mb-0">Applications Statistics</h1>
           <button
             onClick={() => navigate("/post")}
-            className="bg-blue-600 text-white py-2 px-4 rounded"
+            className="bg-blue-600 text-white py-2 px-4 rounded w-full md:w-auto"
           >
             Job Post
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-6">
-          {/* Application statistics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-6 items-center">
+          <div className="bg-blue-100 shadow-md p-6 rounded-lg transition duration-300 hover:shadow-xl">
+            <h2 className="font-bold text-lg text-blue-800">Jobs Posted</h2>
+            <p className="text-2xl font-semibold text-blue-900">{statistics.posted}</p>
+          </div>
+          <div className="bg-green-100 shadow-md p-6 rounded-lg transition duration-300 hover:shadow-xl">
+            <h2 className="font-bold text-lg text-green-800">Shortlisted</h2>
+            <p className="text-2xl font-semibold text-green-900">{statistics.shortlisted}</p>
+          </div>
+          <div className="bg-yellow-100 shadow-md p-6 rounded-lg transition duration-300 hover:shadow-xl">
+            <h2 className="font-bold text-lg text-yellow-800">Applications</h2>
+            <p className="text-2xl font-semibold text-yellow-900">{statistics.applications}</p>
+          </div>
         </div>
 
         <div className="mt-8 w-full">
           <h2 className="text-xl font-bold mb-4">Job Applications</h2>
-          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-3 px-4">Title</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4">Location</th>
-                <th className="py-3 px-4">Salary</th>
-                <th className="py-3 px-4">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {posts.map((job) => (
-                <tr key={job._id} className="border-t">
-                  <td className="py-3 px-4">{job.title}</td>
-                  <td className="py-3 px-4">{job.category}</td>
-                  <td className="py-3 px-4">{job.type}</td>
-                  <td className="py-3 px-4">{job.location}</td>
-                  <td className="py-3 px-4">{job.salary}</td>
-                  <td className="py-3 px-4 flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(job)}
-                      className="bg-green-500 text-white py-2 px-4 rounded flex items-center"
-                    >
-                      <FaEdit className="mr-2" /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleWithdraw(job._id)}
-                      className="bg-red-500 text-white py-2 px-4 rounded flex items-center"
-                    >
-                      <FaTrashAlt className="mr-2" /> Withdraw
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-3 px-4 text-left">Title</th>
+                  <th className="py-3 px-4 text-left">Category</th>
+                  <th className="py-3 px-4 text-left">Type</th>
+                  <th className="py-3 px-4 text-left">Location</th>
+                  <th className="py-3 px-4 text-left">Salary</th>
+                  <th className="py-3 px-4 text-left">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {posts.map((job) => (
+                  <tr key={job._id} className="border-t hover:bg-gray-50 transition duration-200">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center">
+                        <FaBriefcase className="mr-2 text-blue-600" />
+                        <span>{job.title}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">{job.category}</td>
+                    <td className="py-3 px-4">{job.type}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center">
+                        <FaMapMarkerAlt className="mr-2 text-red-600" />
+                        <span>{job.location}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center">
+                        <FaMoneyBillWave className="mr-2 text-green-600" />
+                        <span>{job.salary}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleEdit(job)}
+                          className="bg-green-500 text-white py-2 px-2 md:px-4 rounded flex items-center text-sm"
+                        >
+                          <FaEdit className="mr-2" /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleWithdraw(job._id)}
+                          className="bg-red-500 text-white py-2 px-2 md:px-4 rounded flex items-center text-sm"
+                        >
+                          <FaTrashAlt className="mr-2" /> Withdraw
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Edit Job Modal */}
       <EditJobModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
         job={selectedJob}
         token={token}
-        fetchPosts={fetchPosts} // Pass fetchPosts to the modal
+        fetchPosts={fetchPosts}
       />
     </div>
   );

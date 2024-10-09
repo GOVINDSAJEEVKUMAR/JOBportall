@@ -4,10 +4,13 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { userAuth } from '../../Conetxt/userAuth'; // assuming you have a context for authentication
 
+
+
 const Login = () => {
   const { setToken, setUser, token } = userAuth(); // pulling from Auth context
   const navigate = useNavigate();
-
+  const {MYURL} = 
+  
   // Redirect if already logged in
   useEffect(() => {
     if (token) {
@@ -34,7 +37,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const login = await axios.post('http://localhost:8070/auth/login', value, { withCredentials: true });
+      const login = await axios.post(`${MYURL}/auth/login`, value, { withCredentials: true });
       const response = login.data;
 
       if (response.success) {

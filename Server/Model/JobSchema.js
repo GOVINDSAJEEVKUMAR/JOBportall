@@ -27,7 +27,9 @@ const jobSchema = new mongoose.Schema({
 
   },
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employer' },
-}, { timestamps: true });
+  employerName: { type: String }, 
+  company: { type: String },
+});
 
 const Job = mongoose.model('Job', jobSchema);
 

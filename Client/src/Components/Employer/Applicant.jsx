@@ -36,8 +36,6 @@ const ApplicantsList = () => {
         if (response.data) {
           const { applications, job } = response.data;
           setApplicants(applications);
-          // console.log(response.data);
-          
           setJobDetails(job);
           toast.success("Applicants loaded successfully");
         }
@@ -52,22 +50,29 @@ const ApplicantsList = () => {
     fetchApplicantsAndJobDetails();
   }, [postedBy, token]);
 
-  const handleStatusUpdate = async (applicant) => {
-    if (!applicant || !applicant.jobseeker || !applicant.jobseeker.id) {
-      console.error("Applicant or jobseeker ID is not defined.");
+  const handleStatusUpdate = async (applicant, newStatus) => {
+    const { jobseeker } = applicant;
+
+    // Check if the jobseeker id is valid
+    if (!jobseeker || !jobseeker.id) {
+      console.error("Applicant or jobseeker ID is not defined.", applicant);
       toast.error("Error: Invalid applicant data.");
       return;
     }
 
-    const jobseekerId = applicant.jobseeker.id;
-    const newStatus = applicant.status === "Accepted" ? "Rejected" : "Accepted";
-
-    setStatusUpdating(applicant._id);
+    const jobseekerId = jobseeker.id; // Ensure you are accessing the correct id
+    const applicationId = applicant._id;
+    console.log("Jobseeker ID:", jobseekerId);
+    console.log("Application ID:", applicationId);
     
+     // Use the application ID from the applicant object
+
+    setStatusUpdating(applicationId);
+
     try {
       const response = await axios.put(
-        `http://localhost:8070/apply/update/${jobseekerId}`,
-        { status: newStatus },
+        `http://localhost:8070/apply/update/${jobseekerId}/${applicationId}`, // API endpoint
+        { status: newStatus }, // Send the new status
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -81,8 +86,6 @@ const ApplicantsList = () => {
             app._id === applicant._id ? { ...app, status: newStatus } : app
           )
         );
-        console.log("Status updated:", response.data);
-        
         toast.success(`Status updated to "${newStatus}" successfully!`);
       } else {
         toast.error("Failed to update status.");
@@ -102,13 +105,13 @@ const ApplicantsList = () => {
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="flex">
+    <div className="flex ">
       <Sidebar />
       <div className="flex-1 p-6 bg-gray-50">
         <div className="min-h-screen bg-gray-50">
-          <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between items-center">
+          <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex flex-col md:flex-row justify-between items-center">
             <h2 className="text-2xl font-bold text-gray-800">Applicants</h2>
-            <div>
+            <div className="mt-4 md:mt-0">
               <button className="bg-blue-600 text-white py-1 px-4 rounded">
                 Total(s): {applicants.length}
               </button>
@@ -127,10 +130,10 @@ const ApplicantsList = () => {
           )}
 
           <div className="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between items-center font-bold">
-            <p>JOB</p>
-            <p>NAME</p>
-            <p>RESUME</p>
-            <p>STATUS</p>
+            <p className="w-1/4">JOB</p>
+            <p className="w-1/4">NAME</p>
+            <p className="w-1/4">RESUME</p>
+            <p className="w-1/4">ACTION</p>
           </div>
 
           <div>
@@ -138,13 +141,13 @@ const ApplicantsList = () => {
               applicants.map((applicant) => (
                 <Applicant
                   key={applicant._id}
-                  applicant={applicant} // Pass whole applicant object
+                  applicant={applicant}
                   onStatusUpdate={handleStatusUpdate}
                   statusUpdating={statusUpdating}
                 />
               ))
             ) : (
-              <p>No applicants found</p>
+              <p>No Applications Yet</p>
             )}
           </div>
         </div>
@@ -154,14 +157,18 @@ const ApplicantsList = () => {
 };
 
 const Applicant = React.memo(({ applicant, onStatusUpdate, statusUpdating }) => {
-  const { _id, jobseeker, status, job } = applicant;
+  const { _id, jobseeker, job, status } = applicant;
 
   return (
-    <div className="flex justify-between items-center bg-white shadow-md rounded-lg p-4 mb-4 font-serif">
-      <p className="text-gray-600 font-bold">{job.title}</p>
-      <h3 className="font-bold text-gray-700">{jobseeker.name}</h3>
+    <div
+      className={`flex flex-col md:flex-row justify-between items-center bg-white shadow-md rounded-lg p-4 mb-4 font-serif ${
+        status === "Accepted" ? "border-2 border-green-500" : status === "Rejected" ? "border-2 border-red-500" : "border-2 border-gray-300"
+      }`}
+    >
+      <p className="text-gray-600 font-bold w-full md:w-1/4">{job.title}</p>
+      <h3 className="font-bold text-gray-700 w-full md:w-1/4">{jobseeker.name}</h3>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex justify-between gap-4 items-center w-full md:w-1/4">
         <a
           href={`http://localhost:8070/${applicant.resume}`}
           target="_blank"
@@ -172,21 +179,17 @@ const Applicant = React.memo(({ applicant, onStatusUpdate, statusUpdating }) => 
           View Resume
         </a>
 
-        <p className={`font-semibold ${status === "Accepted" ? "text-green-500" : "text-red-500"}`}>
-          {status}
-        </p>
-
         <div className="flex gap-2">
           <button
-            className={`${statusUpdating === _id ? "opacity-50 cursor-not-allowed" : ""} px-4 py-2 bg-blue-500 text-white rounded-md`}
-            onClick={() => onStatusUpdate(applicant)} // Pass the applicant directly
+            className={`px-4 py-2 bg-blue-500 text-white rounded-md ${statusUpdating === _id || status === "Accepted" ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={() => onStatusUpdate(applicant, "Accepted")}
             disabled={statusUpdating === _id || status === "Accepted"}
           >
             Approve
           </button>
           <button
-            className={`${statusUpdating === _id ? "opacity-50 cursor-not-allowed" : ""} px-4 py-2 bg-red-500 text-white rounded-md`}
-            onClick={() => onStatusUpdate(applicant)} // Pass the applicant directly
+            className={`px-4 py-2 bg-red-500 text-white rounded-md ${statusUpdating === _id || status === "Rejected" ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={() => onStatusUpdate(applicant, "Rejected")}
             disabled={statusUpdating === _id || status === "Rejected"}
           >
             Reject
@@ -198,4 +201,3 @@ const Applicant = React.memo(({ applicant, onStatusUpdate, statusUpdating }) => 
 });
 
 export default ApplicantsList;
-

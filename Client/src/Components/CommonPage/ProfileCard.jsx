@@ -4,7 +4,7 @@ import Navbar from '../../Components/CommonPage/Nav'; // Adjust the import path 
 import { useNavigate, useParams } from 'react-router-dom';
 import { userAuth } from '../../Conetxt/userAuth';
 import { FiEdit2, FiMapPin, FiPhone, FiMail, FiCalendar, FiCheckCircle } from 'react-icons/fi'; // Icons
-
+import { MYURL } from 'dotenv';
 const UserDetailsPage = () => {
   const { _id } = useParams(); // Get the user ID from the URL params
   const [userData, setUserData] = useState(null);
@@ -12,6 +12,8 @@ const UserDetailsPage = () => {
   const [error, setError] = useState(null);
   const { token, user, setToken, setUser } = userAuth();
   const navigate = useNavigate();
+  
+
 
   // Redirect if user is not authenticated (i.e., token does not exist)
   useEffect(() => {
@@ -25,7 +27,7 @@ const UserDetailsPage = () => {
     const fetchUserData = async () => {
       try {
         console.log('Fetching data for userId:', _id); // Log userId
-        const response = await axios.get(`http://localhost:8070/auth/user/${_id}`);
+        const response = await axios.get( `${MYURL}/auth/user/${_id}`);
         console.log('User data:', response.data); // Log the fetched data
         setUserData(response.data);
       } catch (err) {
